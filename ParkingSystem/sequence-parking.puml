@@ -1,0 +1,68 @@
+@startuml Parking Operation Sequence
+
+actor User
+participant "ParkingLot" as PL
+participant "Floor" as F
+participant "ParkingSpot" as PS
+participant "Ticket" as T
+participant "ParkingResult" as PR
+
+User -> PL: park(vehicle, spotType)
+activate PL
+
+note right of PL
+    Steps:
+    1. Validate compatibility
+    2. Search floors
+    3. Occupy spot
+    4. Create ticket
+    5. Store ticket
+    6. Return result
+end note
+
+PL -> PL: validateCompatibility(vehicle, spotType)
+
+loop for each floor
+    PL -> F: getSpots()
+    activate F
+    F --> PL: Map<SpotType, List<ParkingSpot>>
+    deactivate F
+
+    PL -> PL: findAvailableSpot(spotType)
+
+    alt spot found
+        PL -> PS: isOccupied()
+        activate PS
+        PS --> PL: false
+        deactivate PS
+
+        PL -> PS: setOccupied(true)
+        activate PS
+        deactivate PS
+
+        PL -> PL: generateTicketId()
+
+        create T
+        PL -> T: new Ticket(id, vehicle, parkingSpot)
+
+        PL -> PL: activeTickets.put(ticketId, ticket)
+        PL -> PL: ticketCounter++
+
+        create PR
+        PL -> PR: new ParkingResult(SUCCESS, ticket)
+        PL --> User: ParkingResult
+        deactivate PL
+    else no spot available
+        note right of PL
+            Continue to next floor
+        end note
+    end
+end
+
+alt no spot found in any floor
+    create PR
+    PL -> PR: new ParkingResult(FULL, null)
+    PL --> User: ParkingResult
+end
+
+@enduml

@@ -1,0 +1,132 @@
+@startuml Parking System Class Diagram
+
+' Enums
+enum VehicleType {
+    CAR
+    BIKE
+    TRUCK
+    EV
+}
+
+enum SpotType {
+    DISABLED
+    REGULAR
+    EV_SPOT
+    TRUCK
+}
+
+enum ParkingStatus {
+    INVALID
+    SUCCESS
+    FULL
+}
+
+enum PaymentStatus {
+    SUCCESS
+    FAILED
+}
+
+' Domain Classes
+class Vehicle {
+    - type: VehicleType
+    + Vehicle(type: VehicleType)
+    + getType(): VehicleType
+}
+
+class ParkingSpot {
+    - type: SpotType
+    - isOccupied: boolean
+    - spotID: int
+    + ParkingSpot(type: SpotType, spotID: int)
+    + isOccupied(): boolean
+    + setOccupied(occupied: boolean): void
+    + getSpotID(): int
+    + getType(): SpotType
+}
+
+class Floor {
+    - floorNumber: String
+    - spots: Map<SpotType, List<ParkingSpot>>
+    + Floor(floorNumber: String, spots: Map)
+    + getSpots(): Map<SpotType, List<ParkingSpot>>
+    + getFloorNumber(): String
+}
+
+class Ticket {
+    - id: String
+    - vehicle: Vehicle
+    - parkingSpot: ParkingSpot
+    - minutes: int
+    + Ticket(id: String, vehicle: Vehicle, parkingSpot: ParkingSpot)
+    + getId(): String
+    + getVehicle(): Vehicle
+    + getParkingSpot(): ParkingSpot
+    + getMinutes(): int
+}
+
+' Result Classes
+class ParkingResult {
+    - status: ParkingStatus
+    - ticket: Ticket
+    + ParkingResult(status: ParkingStatus, ticket: Ticket)
+    + getStatus(): ParkingStatus
+    + getTicket(): Ticket
+}
+
+class PaymentResult {
+    - paymentStatus: PaymentStatus
+    + PaymentResult(paymentStatus: PaymentStatus)
+}
+
+' Service Classes
+class DiscountService {
+    - discount: int
+    + applyDiscount(totalAmount: double): double
+}
+
+class PricingService {
+    - rates: Map<VehicleType, Double>
+    - discountService: DiscountService
+    + PricingService(rates: Map, discountService: DiscountService)
+    + calculatePrice(ticket: Ticket): double
+}
+
+' Main Orchestrator
+class ParkingLot {
+    - floors: List<Floor>
+    - activeTickets: Map<String, Ticket>
+    - pricingService: PricingService
+    - ticketCounter: int
+    + ParkingLot(floors: List, activeTickets: Map, pricingService: PricingService, ticketCounter: int)
+    + park(vehicle: Vehicle, spot: SpotType): ParkingResult
+    + exit(ticketId: String): PaymentResult
+    + setFloors(floors: List): void
+    + setActiveTickets(activeTickets: Map): void
+    + setTicketCounter(ticketCounter: int): void
+}
+
+' Relationships
+
+' Composition and Aggregation
+ParkingLot "1" *-- "many" Floor : contains
+Floor "1" *-- "many" ParkingSpot : contains
+ParkingLot "1" o-- "many" Ticket : manages
+ParkingLot "1" --> "1" PricingService : uses
+PricingService "1" --> "1" DiscountService : uses
+
+' Associations
+Vehicle --> VehicleType : has
+ParkingSpot --> SpotType : has
+Ticket --> Vehicle : references
+Ticket --> ParkingSpot : references
+ParkingResult --> ParkingStatus : has
+ParkingResult --> Ticket : contains
+PaymentResult --> PaymentStatus : has
+
+' Dependencies
+ParkingLot ..> ParkingResult : creates
+ParkingLot ..> PaymentResult : creates
+ParkingLot ..> Vehicle : receives
+PricingService ..> Ticket : processes
+
+@enduml

@@ -1,0 +1,75 @@
+@startuml Exit and Payment Operation Sequence
+
+actor User
+participant "ParkingLot" as PL
+participant "Ticket" as T
+participant "PricingService" as PS
+participant "DiscountService" as DS
+participant "ParkingSpot" as SPOT
+participant "PaymentResult" as PR
+
+User -> PL: exit(ticketId)
+activate PL
+
+note right of PL
+    Steps:
+    1. Lookup ticket
+    2. If null → invalid
+    3. Calculate price
+    4. Free spot
+    5. Remove from activeTickets
+    6. Return payment result
+end note
+
+PL -> PL: activeTickets.get(ticketId)
+
+alt ticket not found
+    create PR
+    PL -> PR: new PaymentResult(FAILED)
+    PL --> User: PaymentResult(FAILED)
+else ticket found
+    PL -> T: getVehicle()
+    activate T
+    T --> PL: vehicle
+    deactivate T
+
+    PL -> T: getParkingSpot()
+    activate T
+    T --> PL: parkingSpot
+    deactivate T
+
+    PL -> T: getMinutes()
+    activate T
+    T --> PL: minutes
+    deactivate T
+
+    PL -> PS: calculatePrice(ticket)
+    activate PS
+
+    PS -> PS: get rate by vehicleType
+    PS -> PS: calculate base amount
+
+    alt discount applicable
+        PS -> DS: applyDiscount(totalAmount)
+        activate DS
+        DS -> DS: apply discount logic
+        DS --> PS: discountedAmount
+        deactivate DS
+    end
+
+    PS --> PL: finalAmount
+    deactivate PS
+
+    PL -> SPOT: setOccupied(false)
+    activate SPOT
+    deactivate SPOT
+
+    PL -> PL: activeTickets.remove(ticketId)
+
+    create PR
+    PL -> PR: new PaymentResult(SUCCESS)
+    PL --> User: PaymentResult(SUCCESS, amount)
+    deactivate PL
+end
+
+@enduml
