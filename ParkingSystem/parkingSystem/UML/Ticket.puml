@@ -1,0 +1,23 @@
+@startuml
+
+class Ticket {
+    - id : int
+    - minutes : int
+    - vehicle : Vehicle
+    - parkingSpot : ParkingSpot
+
+    + getId() : int
+    + setId(id : int)
+    + getVehicleCategory() : Vehicle
+    + setVehicleCategory(vehicle : Vehicle)
+    + getParkingSpot() : ParkingSpot
+    + setParkingSpot(spot : ParkingSpot)
+}
+
+class Vehicle
+class ParkingSpot
+
+Ticket --> Vehicle
+Ticket --> ParkingSpot
+
+@enduml

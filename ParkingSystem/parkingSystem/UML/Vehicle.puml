@@ -1,0 +1,12 @@
+@startuml
+
+class Vehicle{
+ - type : VehicleType
+
+ +Vehicle(type: VehicleType)
+ +getType() :VehicleType
+}
+
+enum VehicleType
+Vehicle ---> VehicleType
+@enduml
